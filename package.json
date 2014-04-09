@@ -6,12 +6,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "pulseaudio-multi-recorder": "./bin/pulseaudio-multi-recorder"
+  },
   "repository": "",
   "keywords": [
     "pulseaudio",
     "record"
   ],
-  "author": "Paulo Diovani Gonçalves",
+  "author": {
+    "name": "Paulo Diovani Gonçalves",
+    "email": "paulo@diovani.com",
+    "web": "http://blog.diovani.com"
+  },
   "license": "BSD",
   "dependencies": {
     "pulseaudio": "0.0.1"
