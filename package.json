@@ -1,0 +1,19 @@
+{
+  "name": "pulseaudio-multi-recorder",
+  "version": "0.0.1",
+  "description": "Utility for recording multiple sinks with pulseaudio.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "pulseaudio",
+    "record"
+  ],
+  "author": "Paulo Diovani Gonçalves",
+  "license": "BSD",
+  "dependencies": {
+    "pulseaudio": "0.0.1"
+  }
+}
