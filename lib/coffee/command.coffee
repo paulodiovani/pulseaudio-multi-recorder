@@ -1,3 +1,5 @@
+PulseAudio = require('pulseaudio')
+
 ###
 # Command class
 # Run pulseaudio commands
@@ -5,7 +7,6 @@
 class Command
   # Constructor
   constructor: ->
-    PulseAudio = require('pulseaudio')
     @context = new PulseAudio(
       client: 'pulseaudio-multi-recorder'
     )
@@ -17,12 +18,21 @@ class Command
   #   If no callback is provided, end the context.
   ###
   list_sinks: (callback) ->
-    context = @context
-    context.on 'connection', ->
-      context.sink (list) ->
-        console.log list
-        context.end() if not callback?
+    me = @
+    @context.on 'connection', ->
+      me.context.sink(me._onlist.bind me, callback)
     @
+
+  list_sources: (callback) ->
+    me = @
+    @context.on 'connection', ->
+      me.context.source(me._onlist.bind me, callback)
+    @
+
+  _onlist: (callback, list) ->
+    console.log list
+    if typeof callback is 'function' then callback.call(@context)
+    else if not callback? then @context.end()
 
 # exporting node module
 module.exports = new Command()
