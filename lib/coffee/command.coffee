@@ -35,6 +35,7 @@ class Command
   ###
   set_error_stream: (stream) ->
     @err_stream = stream
+    @
 
   ###
   # List active sinks
