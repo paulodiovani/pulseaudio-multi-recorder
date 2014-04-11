@@ -14,20 +14,17 @@ class Command
   client_name: 'pulseaudio-multi-recorder'
 
   ###
-  # Pulseaudio context
-  ###
-  pa_context: null
-
-  ###
   # Default stream for errors (default: process.stderr)
   ###
   err_stream: process.stderr
 
+  ###
+  # Array of child process spawned
+  ###
+  child_processes: []
+
   # Constructor
   constructor: ->
-    @pa_context = new PulseAudio(
-      client: @client_name
-    )
 
   ###
   # Set the error output stream.
@@ -39,43 +36,94 @@ class Command
 
   ###
   # List active sinks
-  # @param {Function} callback function to receive the list as argument
+  # @param {Function} node callback function to receive the list as argument
   # @return {Command} this
   ###
   list_sinks: (callback = ->) ->
-    me = @
-    @pa_context.on 'connection', ->
-      me.pa_context.sink (list) ->
-        callback list
-        me.pa_context.end()
+    try
+      pa_context = new PulseAudio(
+        client: @client_name
+      )
+      pa_context.on 'connection', ->
+        pa_context.sink (list) ->
+          callback null, list
+          pa_context.end()
+    catch e
+      callback e.stack || e
+    @
+
+  ###
+  # List active sink inputs
+  # @param {Function} node callback function to receive the list as argument
+  # @return {Command} this
+  ###
+  list_sink_inputs: (callback = ->) ->
+    try
+      pacmd = spawn('pacmd', ['list-sink-inputs'])
+      buffer = ''
+
+      pacmd.stdout.on 'data', (data) ->
+        buffer += data.toString()
+      pacmd.stdout.on 'end', ->
+        callback null, buffer
+    catch e
+      callback e.stack || e
     @
 
   ###
   # List active sources
-  # @param {Function} callback function to receive the list as argument
+  # @param {Function} node callback function to receive the list as argument
   # @return {Command} this
   ###
   list_sources: (callback = ->) ->
-    me = @
-    @pa_context.on 'connection', ->
-      me.pa_context.source (list) ->
-        callback list
-        me.pa_context.end()
+    try
+      pa_context = new PulseAudio(
+        client: @client_name
+      )
+      pa_context.on 'connection', ->
+        pa_context.source (list) ->
+          callback null, list
+          pa_context.end()
+    catch e
+      callback e.stack || e
     @
 
   ###
   # Record a source using parec and convert to ogg
   # @param {String} source_name source to record
   # @param {String} out_file filename to record to (optional)
+  # @param {Function} node callback function to receive the list as argument
   # @return {Command} this
   ###
-  start_record: (source_name, out_file = "record-#{new Date().getTime().toString(16)}.ogg") ->
-    parec  = spawn('parec', ['-d', source_name, '-n', @client_name])
-    oggenc = spawn('oggenc', ['-b', '192', '-o', out_file, '--raw', '-'])
+  start_record: (
+    source_name,
+    out_file = "record-#{new Date().getTime().toString(16)}.ogg",
+    callback = ->
+  ) ->
+    try
+      parec  = spawn('parec', ['-d', source_name, '-n', @client_name])
+      oggenc = spawn('oggenc', ['-b', '192', '-o', out_file, '--raw', '-'])
 
-    parec.stdout.pipe oggenc.stdin
-    parec.stderr.pipe @err_stream
-    oggenc.stderr.pipe @err_stream
+      # store the child process
+      @child_processes.push({process: parec})
+      @child_processes.push({process: oggenc})
+
+      parec.stdout.pipe oggenc.stdin
+      parec.stderr.pipe @err_stream
+      oggenc.stderr.pipe @err_stream
+
+      parec.on 'end', callback
+    catch e
+      callback e.stack || e
+    @
+
+  ###
+  # Lista os processos filhos em execução
+  # @param {Function} node callback function to receive the list as argument
+  # @return {Command} this
+  ###
+  list_child_process: (callback = ->) ->
+    callback null, @child_processes
     @
 
 # exporting node module
