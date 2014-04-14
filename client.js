@@ -1,4 +1,5 @@
 (function() {
+    // var client = require('./lib/js/command');
     var client = require('./lib/js/ui');
 
     callback = function(err, data) {

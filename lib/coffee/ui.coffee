@@ -1,8 +1,6 @@
 # Requirements
 command = require('./command')
 blessed = require('blessed')
-
-#create a screen object
 screen  = blessed.screen()
 
 class Ui
@@ -16,6 +14,11 @@ class Ui
   ###
   body: null
 
+  ###
+  # Main app menu
+  ###
+  @menu: null
+
   # The class constructor
   constructor: ->
     # Quit on Escape, q, or Control-C.
@@ -24,6 +27,7 @@ class Ui
 
     # creates the body
     @body = blessed.box(
+      parent: screen
       top: 0
       left: 'center'
       width: '100%'
@@ -31,9 +35,8 @@ class Ui
       tags: true
       border:
         type: 'line'
+      content: "{center}{bold}#{@title}{/bold}{/center}"
     )
-    @set_body_content ""
-    screen.append @body
 
   ###
   # Start the application
@@ -43,37 +46,27 @@ class Ui
     @
 
   ###
-  # Set the body (text) content, keeping the title
-  # @param {String} text
-  ###
-  set_body_content: (text) ->
-    @body.setContent "{center}
-      {bold}#{@title}{/bold}\n\n
-      #{text}
-      {/center}"
-    @
-
-  ###
   # Show the main, actions menu
   ###
   actions_menu: ->
-    # @set_body_content "Please, select an option below."
     menu_items = [
       'List sinks'
       'List sink inputs'
       'List sources'
       'List source outputs'
       'Record audio from source'
+      'Exit'
     ]
 
-    menu = blessed.list(
+    @menu = blessed.list(
+      parent: @body
       keys: true
       mouse: true
       align: 'center'
       top: 4
       left: 'center'
       width: 50
-      height: 7
+      height: 8
       border:
         type: 'line'
       style:
@@ -86,23 +79,91 @@ class Ui
       items: menu_items
     )
 
-    menu.prepend(blessed.text(
-      top: -1
+    @menu.prepend(blessed.text(
+      top: 0
       left: 'center'
       content: 'Main menu'
     ))
 
+    @menu.on 'select', @on_action_selected.bind @
 
-    menu.on 'select', @on_action_selected
-
-    @body.append menu
-    menu.focus()
-    menu.select(0)
+    @menu.focus()
     screen.render()
     @
 
+  ###
+  # Callback for main menu item selected
+  ###
   on_action_selected: (item, index) ->
-    console.log index
-    # process.exit 0
+    switch index
+      when 0
+        command.list_sinks @action_list.bind @
+      when 2
+        command.list_sources @action_list.bind @
+      when 5
+        process.exit 0
+
+  ###
+  # Action list items (sinks, sources, etc)
+  # @param {String} err
+  # @param {Object[]} data
+  ###
+  action_list: (err, data) ->
+    if (err)
+      @render_error err
+      return
+
+    # Concats the data content
+    content = ""
+    data.forEach (it) ->
+      content = content.concat(
+        "#{it.index} - #{it.description}\n"
+      )
+
+    # creates a box for showing the items list
+    listbox = blessed.box(
+      parent: @body
+      top: 'center'
+      left: 'center'
+      width: '80%'
+      height: '50%'
+      tags: true
+      border:
+        type: 'line'
+      scrollbar:
+        ch: ' '
+        style:
+          inverse: true
+      content: content
+    )
+
+    # Adds an "ok" button to the box
+    okbutton = blessed.button(
+      parent: listbox
+      keys: true
+      mouse: true
+      bottom: 1
+      left: 'center'
+      shrink: true
+      padding:
+        left: 1
+        right: 1
+      style:
+        inverse: true
+        hover:
+          inverse: false
+      content: 'Ok'
+    )
+
+    # Callback for the Ok button (closes the parent)
+    on_onbutton_press = ->
+      listbox.detach()
+      @menu.focus()
+      screen.render()
+      
+    okbutton.on 'press', on_onbutton_press.bind @
+
+    okbutton.focus()
+    screen.render()
 
 module.exports = new Ui()
