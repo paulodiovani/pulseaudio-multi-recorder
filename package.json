@@ -21,6 +21,7 @@
   },
   "license": "BSD",
   "dependencies": {
-    "pulseaudio": "0.0.1"
+    "pulseaudio": "0.0.1",
+    "blessed": "0.0.29"
   }
 }
