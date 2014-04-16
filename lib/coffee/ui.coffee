@@ -85,7 +85,7 @@ class Ui
       content: 'Main menu'
     ))
 
-    @menu.on 'select', @on_action_selected.bind @
+    @menu.on 'select', @on_action_selected
 
     @menu.focus()
     screen.render()
@@ -94,12 +94,12 @@ class Ui
   ###
   # Callback for main menu item selected
   ###
-  on_action_selected: (item, index) ->
+  on_action_selected: (item, index) =>
     switch index
       when 0
-        command.list_sinks @action_list.bind @
+        command.list_sinks @action_list
       when 2
-        command.list_sources @action_list.bind @
+        command.list_sources @action_list
       when 5
         process.exit 0
 
@@ -108,7 +108,7 @@ class Ui
   # @param {String} err
   # @param {Object[]} data
   ###
-  action_list: (err, data) ->
+  action_list: (err, data) =>
     if (err)
       @render_error err
       return
@@ -155,13 +155,11 @@ class Ui
       content: 'Ok'
     )
 
-    # Callback for the Ok button (closes the parent)
-    on_onbutton_press = ->
+    # Ok button closes the box
+    okbutton.on 'press', =>
       listbox.detach()
       @menu.focus()
       screen.render()
-      
-    okbutton.on 'press', on_onbutton_press.bind @
 
     okbutton.focus()
     screen.render()
